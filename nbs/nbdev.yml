@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "Few-Shot-Feature-Space"
+  site-url: "https://Irad-Zehavi.github.io/Few-Shot-Feature-Space"
+  description: "Demonstrating phenomena in feature spaces of few-shot learning"
+  repo-branch: main
+  repo-url: "https://github.com/Irad-Zehavi/Few-Shot-Feature-Space"
