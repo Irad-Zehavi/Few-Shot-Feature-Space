@@ -1,0 +1,8 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - inter_class.ipynb
+      - intra_class.ipynb
+      - pca.ipynb
+      - utils.ipynb

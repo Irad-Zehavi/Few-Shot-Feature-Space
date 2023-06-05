@@ -5,4 +5,12 @@ d = { 'settings': { 'branch': 'main',
                 'doc_host': 'https://Irad-Zehavi.github.io',
                 'git_url': 'https://github.com/Irad-Zehavi/Few-Shot-Feature-Space',
                 'lib_path': 'Few_Shot_Feature_Space'},
-  'syms': {'Few_Shot_Feature_Space.core': {'Few_Shot_Feature_Space.core.foo': ('core.html#foo', 'Few_Shot_Feature_Space/core.py')}}}
+  'syms': { 'Few_Shot_Feature_Space.core': {'Few_Shot_Feature_Space.core.foo': ('core.html#foo', 'Few_Shot_Feature_Space/core.py')},
+            'Few_Shot_Feature_Space.utils': { 'Few_Shot_Feature_Space.utils.ClassFeatures': ( 'utils.html#classfeatures',
+                                                                                              'Few_Shot_Feature_Space/utils.py'),
+                                              'Few_Shot_Feature_Space.utils.ClassFeatures.centroid': ( 'utils.html#classfeatures.centroid',
+                                                                                                       'Few_Shot_Feature_Space/utils.py'),
+                                              'Few_Shot_Feature_Space.utils.ClassFeatures.compute': ( 'utils.html#classfeatures.compute',
+                                                                                                      'Few_Shot_Feature_Space/utils.py'),
+                                              'Few_Shot_Feature_Space.utils.plot_hist': ( 'utils.html#plot_hist',
+                                                                                          'Few_Shot_Feature_Space/utils.py')}}}
