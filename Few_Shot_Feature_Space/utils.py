@@ -31,9 +31,12 @@ from scipy.stats import norm
 import matplotlib.pyplot as plt
 
 
-def plot_hist(angles, fit_gausiann=True):
-    _, bins, _ = plt.hist(angles, bins=100, label='Angle', alpha=.5, edgecolor='black', lw=1, density=True)
+def plot_hist(angles, fit_gausiann=True, ax=None):
+    ax = ax or plt.subplot()
+    _, bins, _ = ax.hist(angles, bins='auto', label='Angle', alpha=.5, edgecolor='black', lw=1, density=True)
     if fit_gausiann:
         mu, sigma = norm.fit(angles)
         y = norm.pdf(bins, mu, sigma)
-        plt.plot(bins, y)
+        ax.plot(bins, y)
+
+    return ax
