@@ -4,5 +4,6 @@ website:
       - index.ipynb
       - inter_class.ipynb
       - intra_class.ipynb
+      - normal_dist.ipynb
       - pca.ipynb
       - utils.ipynb
