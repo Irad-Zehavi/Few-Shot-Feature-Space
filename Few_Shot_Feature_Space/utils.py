@@ -39,6 +39,10 @@ class ClassFeatures(Tensor):
     def centroid(self):
         return self.mean(0)
 
+    @property
+    def off_centroid_features(self):
+        return self-self.centroid
+
 # %% ../nbs/utils.ipynb 4
 from scipy.stats import norm
 import matplotlib.pyplot as plt
@@ -49,7 +53,8 @@ def plot_hist(values, bins='auto', fit_gausiann=True, ax=None):
     _, bins, _ = ax.hist(values, bins=bins, alpha=.5, edgecolor='black', lw=1, density=True)
     if fit_gausiann:
         mu, sigma = norm.fit(values)
-        y = norm.pdf(bins, mu, sigma)
-        ax.plot(bins, y)
+        x = np.linspace(bins[0], bins[-1], 100)
+        y = norm.pdf(x, mu, sigma)
+        ax.plot(x, y)
 
     return ax
