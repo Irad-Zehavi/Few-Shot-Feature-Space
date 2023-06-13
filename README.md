@@ -24,7 +24,7 @@ In the sidebar you’ll find differnet links to different pages,
 demonstrating the differnet geometrical properties:
 
 - `Normal Distribution` shows that the class means, and the off-centroid
-  points in each class, distribute normally
+  points in each class, distribute approximately normally
 - `Class Mean PCA` shows that class means effectively reside in a
   low-dimensional subspace
 - `Inter-Class` shows that class means tend to be orthogonal to one
@@ -32,7 +32,10 @@ demonstrating the differnet geometrical properties:
 - `Intra-Class` shows that classes tend to be tightly concentrated
   (angle-wise). Together with the previous property, this explains the
   effectiveness of such feature extractors as bakbones for Siamese
-  Netowrks (since inter-class and intra-class angles are separable)
+  Netowrks (since inter-class and intra-class angles are separable).
+  Here we also see that points of the same class tend to distribute
+  symmetrically around the class mean direction (after projecting-out
+  the mean direction, point pairs tend to be orthogonal).
 
 ## Install
 
