@@ -20,8 +20,6 @@ def fr_dataloaders():
 
 
 # %% ../nbs/utils.ipynb 3
-from dataclasses import dataclass
-
 from torch import Tensor
 
 from fastai.vision.all import *
@@ -40,21 +38,17 @@ class ClassFeatures(Tensor):
         return self.mean(0)
 
     @property
+    def centroid_dir(self):
+        return F.normalize(self.centroid, dim=0)
+
+    @property
     def off_centroid_features(self):
-        return self-self.centroid
+        proj_mat = self.centroid_dir.outer(self.centroid_dir)
+        return self - (self @ proj_mat)
 
 # %% ../nbs/utils.ipynb 4
-from scipy.stats import norm
-import matplotlib.pyplot as plt
+import seaborn as sns
 
 
-def plot_hist(values, bins='auto', fit_gausiann=True, ax=None):
-    ax = ax or plt.subplot()
-    _, bins, _ = ax.hist(values, bins=bins, alpha=.5, edgecolor='black', lw=1, density=True)
-    if fit_gausiann:
-        mu, sigma = norm.fit(values)
-        x = np.linspace(bins[0], bins[-1], 100)
-        y = norm.pdf(x, mu, sigma)
-        ax.plot(x, y)
-
-    return ax
+def plot_hist(values, **kwargs):
+    return sns.kdeplot(values, **kwargs)
