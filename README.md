@@ -5,37 +5,40 @@
 Neural Collapse (https://arxiv.org/abs/2008.08186) is a phenomenon where
 after enough traning, a model’s feature space presents a specific
 geometrical structure, namely small intra-class variation, and class
-means that form a simplex ETF structure. In this work we aim to
-demonstrate that similar-but-different properties arise in featur
-extractors used for few-shot learning (e.g. pair matching using Siamese
-networks), for classes unseen during training.
+means that form a simplex ETF structure. Similarly, in this work I show
+demonstrate geometrical properties that arise in feature extractors used
+for few-shot learning (e.g. pair matching using Siamese networks), for
+classes unseen during training.
 
 Specifically, we see that $d$-dimensional feature vectors of class $C$
-distribute as $\mathcal{N}(\mu_C, \sigma^2)^d$, where $\mu_C$
-distributes uniformly on a unit-sphere in some $k$-dimensional subspace.
-Assuming “ideal class samples” (prototypes) indeed distribute uniformly
-on some feature sphere, and the intra-class variablity distributes
-normally in that same space, we can deduce that the learning process
-correctly identifies this set of features (and other redundant ones)
-based on the classes seen during training, which would naturally lead to
-good generalization.
+distribute as a Gaussian $\mathcal{N}(\mu_C, \Sigma_C)$, where the
+differnet class means $\mu_C$ also distribute as a Gaussian. We also see
+that almost all of the variability in feature space is represented in a
+$k$-dimensional space for $k<d$ (e.g. for LFW $k \approx d/10$)
+
+As natural distributions often tend to a Gaussian distribution, we can
+assume that “ideal class features” (prototypes) and the intra-class
+variations distribute as Gaussians. Therefore, these findings suggest
+that the learning process correctly identifies this set of features (and
+other redundant ones) as the best features to learn the large set of
+classes seen during training, which would naturally lead to good
+generalization to new classes.
 
 In the sidebar you’ll find differnet links to different pages,
 demonstrating the differnet geometrical properties:
 
-- `Normal Distribution` shows that the class means, and the off-centroid
-  points in each class, distribute approximately normally
-- `Class Mean PCA` shows that class means effectively reside in a
-  low-dimensional subspace
-- `Inter-Class` shows that class means tend to be orthogonal to one
-  another
+- `Normal Distribution` shows that features tend to distribute as
+  Gaussians
+- `Class Mean PCA` shows that a low-dimensional subspace contains all of
+  the feature information
+- `Inter-Class` shows that classes tend to be orthogonal to one another
 - `Intra-Class` shows that classes tend to be tightly concentrated
   (angle-wise). Together with the previous property, this explains the
-  effectiveness of such feature extractors as bakbones for Siamese
+  effectiveness of such feature extractors as backbones for Siamese
   Netowrks (since inter-class and intra-class angles are separable).
-  Here we also see that points of the same class tend to distribute
-  symmetrically around the class mean direction (after projecting-out
-  the mean direction, point pairs tend to be orthogonal).
+  Here we also see that points of the same class tend to spread around
+  the class mean direction (after projecting-out the mean direction,
+  point pairs tend to be orthogonal).
 
 ## Install
 
