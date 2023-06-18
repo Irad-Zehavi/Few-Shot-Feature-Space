@@ -1,0 +1,107 @@
+[
+  {
+    "objectID": "inter_class.html",
+    "href": "inter_class.html",
+    "title": "Inter-Class",
+    "section": "",
+    "text": "We see that samples from different classes tend to be orthogonal, and similarly do the feature means of different classes\nfrom fastai.vision.all import *\n\nfrom similarity_learning.all import *\n\nfrom Few_Shot_Feature_Space.utils import *\ndef pairwise_angles(pair_sampler, n_samples=int(1e5)):\n    dl = TfmdDL(range(n_samples),\n                num_workers=0,\n                after_item=lambda _: pair_sampler(),\n                after_batch=angle)\n    return torch.cat(list(progress_bar(dl))).cpu()\n\ndef inter_class_hist(dl, fe):\n    class_ftrs = ClassFeatures.compute(dl, fe)\n\n    centroids = [f.centroid for f in class_ftrs.values()]\n    angles = pairwise_angles(lambda: random.sample(centroids, 2))\n    ax = plot_hist(angles)\n\n    angles = pairwise_angles(lambda: [random.choice(f) for f in random.sample(list(class_ftrs.values()), 2)])\n    ax = plot_hist(angles)\n\n    ax.set_xlabel('Angle')\n    ax.legend(['Between Class Means', 'Between Samples'])\n\n\n    fix, ax = plt.subplots(1)\n    candidates = [c for c, f in class_ftrs.items() if f.size(0)&gt;100]\n    class_pairs = [random.sample(candidates, 2) for _ in range(10)] \n    for c1, c2 in class_pairs:\n        angles = pairwise_angles(lambda: [random.choice(class_ftrs[c]) for c in (c1, c2)], n_samples=int(1e4))\n        plot_hist(angles)\n\n    ax.legend([f'Classes {c1}, {c2}' for c1, c2 in class_pairs])\nvggface2_fe, casia_webface_fe = fr_feature_extractors()\nlfw_dl, pfr_dl = fr_dataloaders()"
+  },
+  {
+    "objectID": "inter_class.html#vggface2",
+    "href": "inter_class.html#vggface2",
+    "title": "Inter-Class",
+    "section": "VGGFace2",
+    "text": "VGGFace2\n\nLFW\n\ninter_class_hist(lfw_dl, vggface2_fe)\n\n\n    \n      \n      100.00% [157/157 00:01&lt;00:00]\n    \n    \n\n\n\n\n\n\n\n\n\n\nPFR\n\ninter_class_hist(pfr_dl, vggface2_fe)\n\n\n    \n      \n      100.00% [157/157 00:01&lt;00:00]"
+  },
+  {
+    "objectID": "inter_class.html#casia-webface",
+    "href": "inter_class.html#casia-webface",
+    "title": "Inter-Class",
+    "section": "CASIA-WebFace",
+    "text": "CASIA-WebFace\n\nLFW\n\ninter_class_hist(lfw_dl, casia_webface_fe)\n\n\n    \n      \n      100.00% [157/157 00:01&lt;00:00]\n    \n    \n\n\n\n\n\n\n\n\n\ninter_class_hist(pfr_dl, casia_webface_fe)\n\n\n    \n      \n      100.00% [157/157 00:01&lt;00:00]"
+  },
+  {
+    "objectID": "pca.html",
+    "href": "pca.html",
+    "title": "Class Mean PCA",
+    "section": "",
+    "text": "We see that a small number of dimensions captures almost all of the variance, to the point where the rest of the dimensions can be pruned out with almost no effect on the featur extractor’s quality as a Siamese backbone.\nfrom sklearn.decomposition import PCA\nfrom fastai.vision.all import *\n\nfrom similarity_learning.all import *\n\nfrom Few_Shot_Feature_Space.utils import *\ndef plot_variance_per_component(pca):\n    plt.ylabel('Explained Variance')\n    plt.bar(range(pca.n_components_), pca.explained_variance_)\n    plt.axhline(pca.explained_variance_.mean(), label='Average Variance')\n    plt.legend()\n\ndef test_pruning(fe, pca, variance_frac=.99):\n    learn = Learner(LFWPairs().dev().dls(),\n                ThresholdSiamese(fe),\n                metrics=accuracy)\n    learn.model.fit_threshold(learn.dls.train)\n\n    full_var_acc = learn.validate()[1]\n\n    cumulative_variance = pca.explained_variance_ratio_.cumsum()\n    n_comps, total_variance_frac = [(i+1, x) for i, x in enumerate(cumulative_variance) if x &lt; variance_frac][-1]\n    comps = Tensor(pca.components_[:n_comps]).cuda()\n    proj_mat = comps.T @ comps\n    learn.model = ThresholdSiamese(nn.Sequential(fe, Lambda(lambda x: x @ proj_mat)))\n\n    learn.model.fit_threshold(learn.dls.train)\n\n    print(f\"LFW accuracy at 100% variance with {pca.n_components_} components: {full_var_acc*100:.3f}%\",\n          f\"LFW accuracy at {total_variance_frac*100:.3f}% variance with {n_comps} components: {learn.validate()[1]*100:.3f}%\",\n          sep='\\n')\n\n\ndef pca(dl, fe):\n    class_ftrs = ClassFeatures.compute(dl, fe)\n    class_means_stacked = torch.stack([cf.centroid for cf in class_ftrs.values()]).cpu()\n    pca = PCA()\n    pca.fit(class_means_stacked)\n\n    plot_variance_per_component(pca)\n\n    test_pruning(fe, pca)\nvggface2_fe, casia_webface_fe = fr_feature_extractors()\nlfw_dl, pfr_dl = fr_dataloaders()"
+  },
+  {
+    "objectID": "pca.html#vggface2",
+    "href": "pca.html#vggface2",
+    "title": "Class Mean PCA",
+    "section": "VGGFace2",
+    "text": "VGGFace2\n\nLFW\n\npca(lfw_dl, vggface2_fe)\n\n\n\n\nLFW accuracy at 100% variance with 512 components: 99.200%\nLFW accuracy at 98.182% variance with 47 components: 99.200%\n\n\n\n\n\n\n\nPFR\n\npca(pfr_dl, vggface2_fe)\n\n\n\n\nLFW accuracy at 100% variance with 105 components: 99.200%\nLFW accuracy at 98.791% variance with 43 components: 99.000%"
+  },
+  {
+    "objectID": "pca.html#casia-webface",
+    "href": "pca.html#casia-webface",
+    "title": "Class Mean PCA",
+    "section": "CASIA-WebFace",
+    "text": "CASIA-WebFace\n\nLFW\n\npca(lfw_dl, casia_webface_fe)\n\n\n\n\nLFW accuracy at 100% variance with 512 components: 98.000%\nLFW accuracy at 98.945% variance with 74 components: 98.000%\n\n\n\n\n\n\npca(pfr_dl, casia_webface_fe)\n\n\n\n\nLFW accuracy at 100% variance with 105 components: 98.000%\nLFW accuracy at 98.965% variance with 60 components: 97.800%"
+  },
+  {
+    "objectID": "normal_dist.html",
+    "href": "normal_dist.html",
+    "title": "Normal Distribution",
+    "section": "",
+    "text": "Here we see that inter-class and intra-class variations withing each PCA component tend to distribute as a Gaussian. We see this both for the different class means, and for random classes - for features of those classes, around the class mean (projected onto the subspace orthogonal to the class mean).\nWe also see that correlations between components are concentrated around 0, suggesting that components are independent.\nfrom sklearn.decomposition import PCA\nfrom scipy.stats import norm\nfrom fastai.vision.all import *\n\nfrom similarity_learning.all import *\n\nfrom Few_Shot_Feature_Space.utils import *\ndef per_component_hist(xs, axs):\n    pca = PCA()\n    pca.fit(xs.cpu())\n        \n    comp_idxs = [i*pca.n_components_//(len(axs)-1) for i in range(len(axs)-2)] + [pca.n_components_-1]\n    for comp_idx, ax in zip(comp_idxs, axs[:-1]):\n        dir = Tensor(pca.components_[comp_idx]).cuda()\n        projected = (xs @ dir).cpu()\n        plot_hist(projected, ax=ax)\n        ax.set_title(f'Component #{comp_idx+1} out of {pca.n_components_}')\n\n    n_comps = [i for i, v in enumerate(pca.explained_variance_ratio_.cumsum()) if v&lt;.9999][-1] + 1\n    xs = xs @ Tensor(pca.components_[:n_comps]).T.cuda()\n\n    corr = xs.T.corrcoef().cpu()\n    corr.fill_diagonal_(0)  # we only care about inter-component correlations\n    plot_hist(corr.view(-1), ax=axs[-1])\n    axs[-1].set_title('Correlations Between Main Components')\n    \n\ndef class_mean_per_components(centroids, n_plots):\n    n_plots +=1 #  covaraince plot\n    fig, axs = plt.subplots(1, n_plots, figsize=(n_plots*5, 5))\n    fig.suptitle('Class Mean Distributions Across PCA Components')\n    per_component_hist(centroids, axs)\n\ndef off_mean_per_classes_and_components(class_ftrs, n_plots):\n    n_plots +=1 #  covaraince plot\n    fig, axss = plt.subplots(4, n_plots, figsize=(n_plots*5, 20))\n    fig.suptitle('Around-Mean Distributions Across Classes and PCA Components')\n    cluster_candidates = [f for f in class_ftrs.values() if f.size(0) &gt; 100]\n    for ftrs, axs in zip(random.sample(cluster_candidates, len(axss)), axss):\n        per_component_hist(ftrs.off_centroid_features, axs)\ndef plot(dl, fe, n_plots=5):\n    class_ftrs = ClassFeatures.compute(dl, fe)\n    centroids = torch.stack([f.centroid for f in class_ftrs.values()])\n    global_mean = centroids.mean(0)\n\n    class_mean_per_components(centroids - global_mean, n_plots)\n\n    off_mean_per_classes_and_components(class_ftrs, n_plots)\nvggface2_fe, casia_webface_fe = fr_feature_extractors()\nlfw_dl, pfr_dl = fr_dataloaders()"
+  },
+  {
+    "objectID": "normal_dist.html#vggface2",
+    "href": "normal_dist.html#vggface2",
+    "title": "Normal Distribution",
+    "section": "VGGFace2",
+    "text": "VGGFace2\n\nLFW\n\nplot(lfw_dl, vggface2_fe)\n\n\n    \n      \n      100.00% [207/207 00:17&lt;00:00]\n    \n    \n\n\n\n\n\n\n\n\n\n\nPFR\n\nplot(pfr_dl, vggface2_fe)\n\n\n    \n      \n      100.00% [274/274 00:23&lt;00:00]"
+  },
+  {
+    "objectID": "normal_dist.html#casia-webface",
+    "href": "normal_dist.html#casia-webface",
+    "title": "Normal Distribution",
+    "section": "CASIA-WebFace",
+    "text": "CASIA-WebFace\n\nLFW\n\nplot(lfw_dl, casia_webface_fe)\n\n\n    \n      \n      100.00% [207/207 00:18&lt;00:00]\n    \n    \n\n\n\n\n\n\n\n\n\n\nPFR\n\nplot(pfr_dl, casia_webface_fe)\n\n\n    \n      \n      100.00% [274/274 00:23&lt;00:00]"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Few-Shot-Feature-Space",
+    "section": "",
+    "text": "Neural Collapse (https://arxiv.org/abs/2008.08186) is a phenomenon where after enough traning, a model’s feature space presents a specific geometrical structure, namely small intra-class variation, and class means that form a simplex ETF structure. Similarly, in this work I show demonstrate geometrical properties that arise in feature extractors used for few-shot learning (e.g. pair matching using Siamese networks), for classes unseen during training.\nSpecifically, we see that \\(d\\)-dimensional feature vectors of class \\(C\\) distribute as a Gaussian \\(\\mathcal{N}(\\mu_C, \\Sigma_C)\\), where the differnet class means \\(\\mu_C\\) also distribute as a Gaussian. We also see that almost all of the variability in feature space is represented in a \\(k\\)-dimensional space for \\(k&lt;d\\) (e.g. for LFW \\(k \\approx d/10\\))\nAs natural distributions often tend to a Gaussian distribution, we can assume that “ideal class features” (prototypes) and the intra-class variations distribute as Gaussians. Therefore, these findings suggest that the learning process correctly identifies this set of features (and other redundant ones) as the best features to learn the large set of classes seen during training, which would naturally lead to good generalization to new classes.\nIn the sidebar you’ll find differnet links to different pages, demonstrating the differnet geometrical properties:"
+  },
+  {
+    "objectID": "index.html#install",
+    "href": "index.html#install",
+    "title": "Few-Shot-Feature-Space",
+    "section": "Install",
+    "text": "Install\ngit clone https://github.com/Irad-Zehavi/Few-Shot-Feature-Space.git\ncd Few-Shot-Feature-Space\npip install ."
+  },
+  {
+    "objectID": "utils.html",
+    "href": "utils.html",
+    "title": "Utils",
+    "section": "",
+    "text": "source\n\nfr_dataloaders\n\n fr_dataloaders ()\n\n\nsource\n\n\nfr_feature_extractors\n\n fr_feature_extractors ()\n\n\nsource\n\n\nClassFeatures\nInitialize self. See help(type(self)) for accurate signature.\n\nsource\n\n\nplot_hist\n\n plot_hist (values, title=None, **kwargs)\n\n\nsource\n\n\nangle\n\n angle (pair)"
+  },
+  {
+    "objectID": "intra_class.html",
+    "href": "intra_class.html",
+    "title": "Intra-Class",
+    "section": "",
+    "text": "We see that for a given class, samples tend to be close (in angle) to one another, and to the mean. On the other hand, when projecting onto the subspace orthogonal to the mean - samples tend to be orthogonal, suggesting they spread-out around the mean.\nimport random\n\nimport torch.nn.functional as F\n\nfrom fastai.vision.all import *\n\nfrom similarity_learning.all import *\n\nfrom Few_Shot_Feature_Space.utils import *\ndef draw_centroid_sample_pair(features_by_class, c=None):\n    f = random.choice(list(features_by_class.values())) if c is None else features_by_class[c]\n    return [f.centroid, random.choice(f)]\n\ndef draw_sample_pair(features_by_class, c=None):\n    f = random.choice(list(features_by_class.values())) if c is None else features_by_class[c]\n    return [random.choice(f), random.choice(f)]\n\ndef intra_class_angles(pair_sampler, n_samples=int(1e5)):\n    dl = TfmdDL(range(n_samples),\n                num_workers=0,\n                after_item=lambda _: pair_sampler(),\n                after_batch=angle)\n    return torch.cat(list(progress_bar(dl))).cpu()\n\ndef off_centroid_angles(features_by_class, n_plots=5, n_samples=int(1e5)):\n    fig, axs = plt.subplots(1, n_plots, figsize=(n_plots*5, 5))\n    fig.suptitle('Off Centroid Pairwise Angles')\n    clusters = random.sample([ftrs for ftrs in features_by_class.values() if ftrs.size(0) &gt; 100], n_plots)\n    for ftrs, ax in zip(clusters, axs):\n        points = list(ftrs.off_centroid_features)\n        dl = TfmdDL(range(n_samples),\n                    num_workers=0,\n                    after_item=lambda _: random.sample(points, 2),\n                    after_batch=angle)\n        plot_hist(torch.cat(list(progress_bar(dl))).cpu(), ax=ax)\n\ndef intra_class_hist(dl, fe, c=None):\n    class_ftrs = ClassFeatures.compute(dl, fe, min_samples=30)\n    \n    angles = intra_class_angles(lambda: draw_centroid_sample_pair(class_ftrs))\n    ax = plot_hist(angles)\n\n    angles = intra_class_angles(lambda: draw_sample_pair(class_ftrs))\n    ax = plot_hist(angles)\n    ax.legend(['Angles From Centroid', 'Angles Between Samples'])\n\n    off_centroid_angles(class_ftrs)\nvggface2_fe, casia_webface_fe = fr_feature_extractors()\nlfw_dl, pfr_dl = fr_dataloaders()"
+  },
+  {
+    "objectID": "intra_class.html#vggface2",
+    "href": "intra_class.html#vggface2",
+    "title": "Intra-Class",
+    "section": "VGGFace2",
+    "text": "VGGFace2\n\nLFW\n\nintra_class_hist(lfw_dl, vggface2_fe)\n\n\n    \n      \n      100.00% [1563/1563 00:08&lt;00:00]\n    \n    \n\n\n\n\n\n\n\n\n\n\nPFR\n\nintra_class_hist(pfr_dl, vggface2_fe)\n\n\n    \n      \n      100.00% [1563/1563 00:09&lt;00:00]"
+  },
+  {
+    "objectID": "intra_class.html#casia-webface",
+    "href": "intra_class.html#casia-webface",
+    "title": "Intra-Class",
+    "section": "CASIA-WebFace",
+    "text": "CASIA-WebFace\n\nLFW\n\nintra_class_hist(lfw_dl, casia_webface_fe)\n\n\n    \n      \n      100.00% [1563/1563 00:08&lt;00:00]\n    \n    \n\n\n\n\n\n\n\n\n\n\nPFR\n\nintra_class_hist(pfr_dl, casia_webface_fe)\n\n\n    \n      \n      100.00% [1563/1563 00:07&lt;00:00]"
+  }
+]
