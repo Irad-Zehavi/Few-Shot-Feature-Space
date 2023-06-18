@@ -50,5 +50,7 @@ class ClassFeatures(Tensor):
 import seaborn as sns
 
 
-def plot_hist(values, **kwargs):
-    return sns.kdeplot(values, **kwargs)
+def plot_hist(values, title=None, **kwargs):
+    ax = sns.kdeplot(values, **kwargs)
+    ax.set_title(title or f'$\mu={values.mean().round(decimals=2)}, \sigma={values.std().round(decimals=2)}$')
+    return ax
